@@ -43,5 +43,6 @@ Token* TokenList::Prev()
 Token* TokenList::GoToStart()
 {
 	CurrentToken = ListStart;
+	Next();
 	return CurrentToken;
 }

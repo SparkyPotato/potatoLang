@@ -1,7 +1,8 @@
 #include "Parser.h"
 
-TokenList Parser::Tokenizer(std::ifstream& FileToParse)
+TokenList Parser::Tokenizer(std::ifstream& FileToParse, bool& ErrorFound)
 {
+	ErrorFound = false;
 	TokenList List(TokenType::START, "Program");
 	std::string CurrentLine;
 	while (std::getline(FileToParse, CurrentLine))
@@ -31,9 +32,11 @@ TokenList Parser::Tokenizer(std::ifstream& FileToParse)
 				i++;
 				while (CurrentLine[i] != '"')
 				{
-					if (CurrentLine[i] == '\n')
+					if (CurrentLine[i] == '\n' || CurrentLine[i] == '\0')
 					{
-						break;
+						std::cout << "Error: String never ends.\n";
+						ErrorFound = true;
+						return TokenList(TokenType::END, "Error");
 					}
 					std::string Character(1, CurrentLine[i]);
 					String.append(Character);
@@ -69,8 +72,83 @@ TokenList Parser::Tokenizer(std::ifstream& FileToParse)
 				List.Add(TokenType::COLON, ":");
 				i++;
 			}
+			if ((CurrentLine[i] == '+') || (CurrentLine[i] == '-') || (CurrentLine[i] == '*') || CurrentLine[i] == '/' || CurrentLine[i] == '=' || CurrentLine[i] == '>' || CurrentLine[i] == '<' || CurrentLine[i] == '^')
+			{
+				std::string String;
+				std::string Character(1, CurrentLine[i]);
+				String.append(Character);
+				List.Add(TokenType::OPERATOR, String);
+				i++;
+			}
 		}
 		List.Add(TokenType::NEWLINE, "\n");
 	}
 	return List;
+}
+
+Node Parser::ParseLine(Executor& CodeExecutor, TokenList List, bool& ErrorFound)
+{
+	Node* CurrentNode = new Node();
+	ErrorFound = false;
+	if (List.CurrentToken->Type == TokenType::NAME && List.CurrentToken->Value == "set")
+	{
+		List.Next();
+		CurrentNode->Type = NodeType::VARIABLEDEFINE;
+		CurrentNode->Name = List.CurrentToken->Value;
+		if (List.Next()->Value == "as")
+		{
+			List.Next();
+		}
+		if (List.CurrentToken->Type == TokenType::NUMBER)
+		{
+			CurrentNode->Params = new NodeTree(CurrentNode, NodeType::NUMBER, List.CurrentToken->Value);
+		}
+		else if (List.CurrentToken->Type == TokenType::STRING)
+		{
+			CurrentNode->Params = new NodeTree(CurrentNode, NodeType::STRING, List.CurrentToken->Value);
+		}
+		else if (List.CurrentToken->Type == TokenType::NAME && (List.CurrentToken->Value == "true" || List.CurrentToken->Value == "false"))
+		{
+			CurrentNode->Params = new NodeTree(CurrentNode, NodeType::BOOLEAN, List.CurrentToken->Value);
+		}
+		else
+		{
+			std::cout << "Error: Illegal assignation.\n";
+			ErrorFound = true;
+			return Node(nullptr, NodeType::INVALID, "Error");
+		}
+	}
+	else if (List.CurrentToken->Type == TokenType::NAME && CodeExecutor.DoesFunctionExist(List.CurrentToken->Value))
+	{
+		CurrentNode->Type = NodeType::FUNCTIONCALL;
+		CurrentNode->Name = List.CurrentToken->Value;
+		CurrentNode->Params = new NodeTree(CurrentNode, NodeType::FUNCTIONCALL, "Function");
+		while (List.Next()->Type != TokenType::NEWLINE)
+		{
+			if (List.CurrentToken->Type == TokenType::NAME  && CodeExecutor.DoesVariableExist(List.CurrentToken->Value))
+			{
+				CurrentNode->Params->Add(NodeType::VARIABLEUSE, List.CurrentToken->Value);
+			}
+			else if (List.CurrentToken->Type == TokenType::NUMBER)
+			{
+				CurrentNode->Params->Add(NodeType::NUMBER, List.CurrentToken->Value);
+			}
+			else if (List.CurrentToken->Type == TokenType::STRING)
+			{
+				CurrentNode->Params->Add(NodeType::STRING, List.CurrentToken->Value);
+			}
+			else if (List.CurrentToken->Type == TokenType::NAME && (List.CurrentToken->Value == "true" || List.CurrentToken->Value == "false"))
+			{
+				CurrentNode->Params->Add(NodeType::BOOLEAN, List.CurrentToken->Value);
+			}
+			else
+			{
+				std::cout << "Error: Illegal arguments passed.\n";
+				ErrorFound = true;
+				return Node(nullptr, NodeType::INVALID, "Error");
+			}
+		}
+	}
+	List.Next();
+	return *CurrentNode;
 }

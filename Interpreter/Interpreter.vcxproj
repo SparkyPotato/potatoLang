@@ -19,12 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Executor.cpp" />
     <ClCompile Include="Interpreter.cpp" />
+    <ClCompile Include="Node.cpp" />
+    <ClCompile Include="NodeTree.cpp" />
     <ClCompile Include="Parser.cpp" />
     <ClCompile Include="Token.cpp" />
     <ClCompile Include="TokenList.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Executor.h" />
+    <ClInclude Include="Node.h" />
+    <ClInclude Include="NodeTree.h" />
     <ClInclude Include="Parser.h" />
     <ClInclude Include="Token.h" />
     <ClInclude Include="TokenList.h" />

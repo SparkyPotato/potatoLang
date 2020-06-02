@@ -4,8 +4,10 @@
 #include <iostream>
 #include <string>
 #include "Parser.h"
-#include "TokenList.h"
 #include "Token.h"
+#include "TokenList.h"
+#include "Node.h"
+#include "NodeTree.h"
 
 int main()
 {
@@ -15,7 +17,15 @@ int main()
 	std::ifstream InputFile;
 	InputFile.open(FileDirectory);
 
-	TokenList Tokens = Parser::Tokenizer(InputFile);
+	bool Error;
+	TokenList Tokens = Parser::Tokenizer(InputFile, Error);
+
 	Tokens.GoToStart();
-	
+
+	Executor CodeExecutor;
+	Parser::ParseLine(CodeExecutor, Tokens, Error);
+	while (Tokens.Next()->Type != TokenType::END)
+	{
+		Parser::ParseLine(CodeExecutor, Tokens, Error);
+	}
 }

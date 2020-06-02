@@ -7,6 +7,7 @@
 enum class TokenType
 {
 	NAME,
+	OPERATOR,
 	NUMBER,
 	COMMA,
 	STRING,
@@ -24,6 +25,7 @@ public:
 public:
 	TokenType Type;
 	std::string Value;
+
 	Token* NextToken;
 	Token* PrevToken;
 };
