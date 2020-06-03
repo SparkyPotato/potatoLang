@@ -22,7 +22,7 @@ private:
 
 public:
 	Variable* Add(Variable* VarToAdd);
-	Variable* Add(std::string NameOfVar, std::string ValueOfVar, VarType TypeOfVar);
+	Variable* Add(std::string NameOfVar, std::string ValueOfVar);
 	void Remove(std::string NameOfVar);
 	Variable* FindVariable(std::string NameOfVar);
 	bool DoesVariableExist(std::string NameOfVar);
@@ -36,33 +36,7 @@ public:
 private:
 	VariableManager* VarManager;
 
-	void TraverseParams(Node* NodeToTraverse);
-	void TraverseNode(Node* NodeToTraverse);
 	std::string RunNode(Node* NodeToRun);
-
-	void OnEnterVarDefine();
-	void OnExitVarDefine();
-
-	void OnEnterVarUse();
-	void OnExitVarUse();
-
-	void OnEnterFunctionDefine();
-	void OnExitFunctionDefine();
-
-	void OnEnterFunctionCall();
-	void OnExitFunctionCall();
-
-	void OnEnterCodeBlock();
-	void OnExitCodeBlock();
-
-	void OnEnterNumber();
-	void OnExitNumber();
-
-	void OnEnterBoolean();
-	void OnExitBoolean();
-
-	void OnEnterString();
-	void OnExitString();
 
 public:
 	bool RunProgram(Node* ProgramNode);

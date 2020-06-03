@@ -5,105 +5,6 @@ Executor::Executor()
 	VarManager = new VariableManager();
 }
 
-
-void Executor::TraverseParams(Node* NodeToTraverse)
-{
-	if (NodeToTraverse->Params == nullptr)
-	{
-		return;
-	}
-
-	do 
-	{
-		TraverseNode(NodeToTraverse);
-	} while (NodeToTraverse->Params->Next()->Type != NodeType::INVALID);
-}
-
-void Executor::TraverseNode(Node* NodeToTraverse)
-{
-
-}
-
-void Executor::OnEnterVarDefine()
-{
-
-}
-
-void Executor::OnExitVarDefine()
-{
-
-}
-
-void Executor::OnEnterVarUse()
-{
-
-}
-
-void Executor::OnExitVarUse()
-{
-
-}
-
-void Executor::OnEnterFunctionDefine()
-{
-
-}
-
-void Executor::OnExitFunctionDefine()
-{
-
-}
-
-void Executor::OnEnterFunctionCall()
-{
-
-}
-
-void Executor::OnExitFunctionCall()
-{
-
-}
-
-void Executor::OnEnterCodeBlock()
-{
-
-}
-
-void Executor::OnExitCodeBlock()
-{
-
-}
-
-void Executor::OnEnterNumber()
-{
-
-}
-
-void Executor::OnExitNumber()
-{
-
-}
-
-void Executor::OnEnterBoolean()
-{
-
-}
-
-void Executor::OnExitBoolean()
-{
-
-}
-
-void Executor::OnEnterString()
-{
-
-}
-
-void Executor::OnExitString()
-{
-
-}
-
 bool Executor::RunProgram(Node* ProgramNode)
 {
 	if (ProgramNode->Type != NodeType::MAIN)
@@ -127,6 +28,7 @@ bool Executor::RunProgram(Node* ProgramNode)
 			return false;
 		}
 	} while (Params->Next()->Type != NodeType::INVALID);
+	return true;
 }
 
 std::string Executor::RunNode(Node* NodeToRun)
@@ -147,34 +49,17 @@ std::string Executor::RunNode(Node* NodeToRun)
 	{
 		return "";
 	}
-	if (NodeToRun->Type == NodeType::VARIABLEUSE)
-	{
-		if (VarManager->DoesVariableExist(NodeToRun->Name))
-		{
-			return VarManager->FindVariable(NodeToRun->Name)->Value;
-		}
-	}
 	if (NodeToRun->Type == NodeType::VARIABLEDEFINE)
 	{
 		NodeTree* Params = NodeToRun->Params;
 		Params->GoToStart();
-		if (Params->CurrentNode->Type == NodeType::BOOLEAN)
+		if (Params->CurrentNode->Type == NodeType::BOOLEAN || Params->CurrentNode->Type == NodeType::NUMBER || Params->CurrentNode->Type == NodeType::STRING || 
+			Params->CurrentNode->Type == NodeType::FUNCTIONCALL || Params->CurrentNode->Type == NodeType::VARIABLEUSE)
 		{
-			VarManager->Add(NodeToRun->Name, RunNode(Params->CurrentNode), VarType::BOOLEAN);
-			return "Boolean initialized";
-		}
-		if (Params->CurrentNode->Type == NodeType::NUMBER)
-		{
-			VarManager->Add(NodeToRun->Name, RunNode(Params->CurrentNode), VarType::NUMBER);
-			return "Number initialized";
-		}
-		if (Params->CurrentNode->Type == NodeType::STRING)
-		{
-			VarManager->Add(NodeToRun->Name, RunNode(Params->CurrentNode), VarType::STRING);
-			return "String initialized";
+			return VarManager->Add(NodeToRun->Name, RunNode(Params->CurrentNode))->Value;
 		}
 		std::cout << "Illegal assignation\n";
-		return "Fatal Error";
+		return "Error";
 	}
 	if (NodeToRun->Type == NodeType::FUNCTIONCALL)
 	{
@@ -188,9 +73,133 @@ std::string Executor::RunNode(Node* NodeToRun)
 			} while (FunctionParams->Next()->Type != NodeType::INVALID);
 			std::cout << "\n";
 		}
+		if (NodeToRun->Name == "add")
+		{
+			NodeTree* FunctionParams = NodeToRun->Params;
+			FunctionParams->GoToStart();
+			float Value = 0.f;
+			do 
+			{
+				if (FunctionParams->CurrentNode->Type == NodeType::VARIABLEUSE || FunctionParams->CurrentNode->Type == NodeType::NUMBER || FunctionParams->CurrentNode->Type == NodeType::FUNCTIONCALL)
+				{
+					Value += std::stof(RunNode(FunctionParams->CurrentNode));
+				}
+				else if (FunctionParams->CurrentNode->Type == NodeType::STRING)
+				{
+					std::cout << "You cannot add strings. How about giving them as separate parameters to print?\n";
+					return "Error";
+				}
+				else
+				{
+					std::cout << "Illegal Operation\n";
+					return "Error";
+				}
+			} while (FunctionParams->Next()->Type != NodeType::INVALID);
+			return std::to_string(Value);
+		}
+		if (NodeToRun->Name == "subtract")
+		{
+			NodeTree* FunctionParams = NodeToRun->Params;
+			FunctionParams->GoToStart();
+			float Value = 0.f;
+			if (FunctionParams->CurrentNode->Type == NodeType::VARIABLEUSE || FunctionParams->CurrentNode->Type == NodeType::NUMBER || FunctionParams->CurrentNode->Type == NodeType::FUNCTIONCALL)
+			{
+				Value = std::stof(RunNode(FunctionParams->CurrentNode));
+				FunctionParams->Next();
+				Value -= std::stof(RunNode(FunctionParams->CurrentNode));
+			}
+			else
+			{
+				std::cout << "Illegal Operation\n";
+				return "Error";
+			}
+			if (FunctionParams->Next()->Type != NodeType::INVALID)
+			{
+				std::cout << "Ignoring all arguments after argument 2\n";
+			}
+			return std::to_string(Value);
+		}
+		if (NodeToRun->Name == "multiply")
+		{
+			NodeTree* FunctionParams = NodeToRun->Params;
+			FunctionParams->GoToStart();
+			float Value = 1.f;
+			do
+			{
+				if (FunctionParams->CurrentNode->Type == NodeType::VARIABLEUSE || FunctionParams->CurrentNode->Type == NodeType::NUMBER || FunctionParams->CurrentNode->Type == NodeType::FUNCTIONCALL)
+				{
+					Value *= std::stof(RunNode(FunctionParams->CurrentNode));
+				}
+				else
+				{
+					std::cout << "Illegal Operation\n";
+					return "Error";
+				}
+			} while (FunctionParams->Next()->Type != NodeType::INVALID);
+			return std::to_string(Value);
+		}
+		if (NodeToRun->Name == "divide")
+		{
+			NodeTree* FunctionParams = NodeToRun->Params;
+			FunctionParams->GoToStart();
+			float Value = 0.f;
+			if (FunctionParams->CurrentNode->Type == NodeType::VARIABLEUSE || FunctionParams->CurrentNode->Type == NodeType::NUMBER || FunctionParams->CurrentNode->Type == NodeType::FUNCTIONCALL)
+			{
+				Value = std::stof(RunNode(FunctionParams->CurrentNode));
+				FunctionParams->Next();
+				Value /= std::stof(RunNode(FunctionParams->CurrentNode));
+			}
+			else
+			{
+				std::cout << "Illegal Operation\n";
+				return "Error";
+			}
+			if (FunctionParams->Next()->Type != NodeType::INVALID)
+			{
+				std::cout << "Ignoring all arguments after argument 2\n";
+			}
+			return std::to_string(Value);
+		}
+		if (NodeToRun->Name == "power")
+		{
+			NodeTree* FunctionParams = NodeToRun->Params;
+			FunctionParams->GoToStart();
+			float Value = 0.f;
+			if (FunctionParams->CurrentNode->Type == NodeType::VARIABLEUSE || FunctionParams->CurrentNode->Type == NodeType::NUMBER || FunctionParams->CurrentNode->Type == NodeType::FUNCTIONCALL)
+			{
+				Value = std::stof(RunNode(FunctionParams->CurrentNode));
+				int Base = Value;
+				FunctionParams->Next();
+				for (int i = std::stof(RunNode(FunctionParams->CurrentNode)); i != 1; i--)
+				{
+					Value *= Base;
+				}
+			}
+			else
+			{
+				std::cout << "Illegal Operation\n";
+				return "Error";
+			}
+			if (FunctionParams->Next()->Type != NodeType::INVALID)
+			{
+				std::cout << "Ignoring all arguments after argument 2\n";
+			}
+			return std::to_string(Value);
+		}
 		return "Cannot convert to string";
 	}
-
+	if (NodeToRun->Type == NodeType::VARIABLEUSE)
+	{
+		if (VarManager->DoesVariableExist(NodeToRun->Name))
+		{
+			return VarManager->FindVariable(NodeToRun->Name)->Value;
+		}
+		else
+		{
+			std::cout << "Unidentified identifier\n";
+			return "Error";
+		}
+	}
 	std::cout << "Unidentified identifier\n";
 	return "Error";
 }
@@ -237,6 +246,10 @@ Variable* VariableManager::Add(Variable* VarToAdd)
 	}
 	else
 	{
+		if (DoesVariableExist(VarToAdd->Name))
+		{
+			FindVariable(VarToAdd->Name)->Value = VarToAdd->Value;
+		}
 		Variable* OldLast = LastVar;
 		LastVar = VarToAdd;
 		OldLast->NextVar = LastVar;
@@ -245,11 +258,11 @@ Variable* VariableManager::Add(Variable* VarToAdd)
 	return LastVar;
 }
 
-Variable* VariableManager::Add(std::string NameOfVar, std::string ValueOfVar, VarType TypeOfVar)
+Variable* VariableManager::Add(std::string NameOfVar, std::string ValueOfVar)
 {
 	if (FirstVar == nullptr)
 	{
-		FirstVar = LastVar = CurrentVar = new Variable(NameOfVar, ValueOfVar, TypeOfVar);
+		FirstVar = LastVar = CurrentVar = new Variable(NameOfVar, ValueOfVar);
 		FirstVar->NextVar = LastVar;
 		FirstVar->PrevVar = nullptr;
 		LastVar->PrevVar = FirstVar;
@@ -257,8 +270,12 @@ Variable* VariableManager::Add(std::string NameOfVar, std::string ValueOfVar, Va
 	}
 	else
 	{
+		if (DoesVariableExist(NameOfVar))
+		{
+			FindVariable(NameOfVar)->Value = ValueOfVar;
+		}
 		Variable* OldLast = LastVar;
-		LastVar = new Variable(NameOfVar, ValueOfVar, TypeOfVar);
+		LastVar = new Variable(NameOfVar, ValueOfVar);
 		OldLast->NextVar = LastVar;
 		LastVar->PrevVar = OldLast;
 	}
@@ -267,10 +284,10 @@ Variable* VariableManager::Add(std::string NameOfVar, std::string ValueOfVar, Va
 
 void VariableManager::Remove(std::string NameOfVar)
 {
-	FindVariable(NameOfVar);
-	CurrentVar->PrevVar->NextVar = CurrentVar->NextVar;
-	CurrentVar->NextVar->PrevVar = CurrentVar->PrevVar;
-	delete CurrentVar;
+	Variable* VarToDelete = FindVariable(NameOfVar);
+	VarToDelete->PrevVar->NextVar = VarToDelete->NextVar;
+	VarToDelete->NextVar->PrevVar = VarToDelete->PrevVar;
+	delete VarToDelete;
 	CurrentVar = FirstVar;
 }
 
@@ -279,8 +296,7 @@ Variable* VariableManager::FindVariable(std::string NameOfVar)
 	GoToFirstVar();
 	while (CurrentVar->Name != NameOfVar)
 	{
-		Next();
-		if (CurrentVar->NextVar == nullptr)
+		if (!Next())
 		{
 			return nullptr;
 		}

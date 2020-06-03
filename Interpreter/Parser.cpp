@@ -45,9 +45,14 @@ TokenList Parser::Tokenizer(std::ifstream& FileToParse, bool& ErrorFound)
 				List.Add(TokenType::STRING, String);
 				continue;
 			}
-			if (CurrentLine[i] >= '0' && CurrentLine[i] <= '9' || CurrentLine[i] == '.')
+			if (CurrentLine[i] >= '0' && CurrentLine[i] <= '9' || CurrentLine[i] == '.' || CurrentLine[i] == '-')
 			{
 				std::string String = "";
+				if (CurrentLine[i] == '-')
+				{
+					String = "-";
+					i++;
+				}
 				while (CurrentLine[i] >= '0' && CurrentLine[i] <= '9' || CurrentLine[i] == '.')
 				{
 					if (CurrentLine[i] == '\n')
