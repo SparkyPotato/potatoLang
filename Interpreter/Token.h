@@ -6,15 +6,15 @@
 
 enum class TokenType
 {
-	NAME,
-	OPERATOR,
-	NUMBER,
-	COMMA,
-	STRING,
-	NEWLINE,
-	COLON,
-	START,
-	END
+	NAME, // Anything that isn't a number or string
+	OPERATOR, // +, -, /, *, >, <, =, ^
+	NUMBER, // A sequence of consecutive digits
+	STRING, // Anything surrounded by quotes (")
+	NEWLINE, // A newline character '\n'
+	BRACE, // A curly brace '{' or '}'
+	PARENTHESIS, // A parenthesis '(' or ')'
+	START, // Only returned when trying to go out of bounds going backwards
+	END // Only returned when trying to go out of bounds going forwards
 };
 
 class Token
@@ -26,7 +26,7 @@ public:
 	TokenType Type;
 	std::string Value;
 
-	Token* NextToken;
-	Token* PrevToken;
+	Token* NextToken; // Next Token in the Linked List
+	Token* PrevToken; // Previous Token in the Linked List
 };
 
