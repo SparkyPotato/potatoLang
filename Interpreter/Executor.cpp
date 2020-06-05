@@ -73,6 +73,20 @@ std::string Executor::RunNode(Node* NodeToRun)
 			} while (FunctionParams->Next()->Type != NodeType::INVALID);
 			std::cout << "\n";
 		}
+		if (NodeToRun->Name == "input")
+		{
+			NodeTree* FunctionParams = NodeToRun->Params;
+			FunctionParams->GoToStart();
+			std::cout << RunNode(FunctionParams->CurrentNode);
+			if (FunctionParams->Next()->Type != NodeType::INVALID)
+			{
+				std::cout << "Expected only one argument\n";
+				return "Error";
+			}
+			std::string Input;
+			std::cin >> Input;
+			return Input;
+		}
 		if (NodeToRun->Name == "add")
 		{
 			NodeTree* FunctionParams = NodeToRun->Params;
@@ -168,9 +182,9 @@ std::string Executor::RunNode(Node* NodeToRun)
 			if (FunctionParams->CurrentNode->Type == NodeType::VARIABLEUSE || FunctionParams->CurrentNode->Type == NodeType::NUMBER || FunctionParams->CurrentNode->Type == NodeType::FUNCTIONCALL)
 			{
 				Value = std::stof(RunNode(FunctionParams->CurrentNode));
-				int Base = Value;
+				float Base = Value;
 				FunctionParams->Next();
-				for (int i = std::stof(RunNode(FunctionParams->CurrentNode)); i != 1; i--)
+				for (int i = std::stoi(RunNode(FunctionParams->CurrentNode)); i != 1; i--)
 				{
 					Value *= Base;
 				}
@@ -185,6 +199,185 @@ std::string Executor::RunNode(Node* NodeToRun)
 				std::cout << "Ignoring all arguments after argument 2\n";
 			}
 			return std::to_string(Value);
+		}
+		if (NodeToRun->Name == "if")
+		{
+			NodeTree* FunctionParams = NodeToRun->Params;
+			FunctionParams->GoToStart();
+			bool ShouldRun = false;
+			ComparatorType Comparator = ComparatorType::IGNORE;
+			Node* FirstNode = FunctionParams->CurrentNode;
+			if (FunctionParams->Next()->Type == NodeType::INVALID)
+			{
+				if (FunctionParams->CurrentNode->Type == NodeType::VARIABLEUSE || FunctionParams->CurrentNode->Type == NodeType::BOOLEAN)
+				{
+					if (RunNode(FunctionParams->CurrentNode) == "true")
+					{
+						ShouldRun = true;
+					}
+					else if (RunNode(FunctionParams->CurrentNode) == "false")
+					{
+						ShouldRun = false;
+					}
+					else
+					{
+						std::cout << "Expected boolean variable\n";
+						return "Error";
+					}
+				}
+				else
+				{
+					std::cout << "Expected comparative expression\n";
+					return "Error";
+				}
+			} 
+			else if (FunctionParams->CurrentNode->Type == NodeType::OPERATOR && FunctionParams->CurrentNode->Name == "=")
+			{
+				Comparator = ComparatorType::EQUAL;
+			}
+			else if (FunctionParams->CurrentNode->Type == NodeType::OPERATOR && FunctionParams->CurrentNode->Name == ">")
+			{
+				if (FunctionParams->Next()->Type == NodeType::OPERATOR && FunctionParams->CurrentNode->Name == "=")
+				{
+					Comparator = ComparatorType::GREATEREQUAL;
+				}
+				else
+				{
+					FunctionParams->Prev();
+					Comparator = ComparatorType::GREATER;
+				}
+			}
+			else if (FunctionParams->CurrentNode->Type == NodeType::OPERATOR && FunctionParams->CurrentNode->Name == "<")
+			{
+				if (FunctionParams->Next()->Type == NodeType::OPERATOR && FunctionParams->CurrentNode->Name == "=")
+				{
+					Comparator = ComparatorType::LESSEREQUAL;
+				}
+				else
+				{
+					FunctionParams->Prev();
+					Comparator = ComparatorType::LESSER;
+				}
+			}
+			Node* SecondNode = FunctionParams->Next();
+
+			if (Comparator == ComparatorType::EQUAL)
+			{
+				if (RunNode(FirstNode) == RunNode(SecondNode))
+				{
+					ShouldRun = true;
+				}
+				else
+				{
+					ShouldRun = false;
+				}
+			}
+			else if (Comparator == ComparatorType::GREATER)
+			{
+				try
+				{
+					std::stof(RunNode(FirstNode));
+					std::stof(RunNode(SecondNode));
+				}
+				catch (const std::exception&)
+				{
+					std::cout << "Couldn't compare\n";
+					return "Error";
+				}
+				if (std::stof(RunNode(FirstNode)) > std::stof(RunNode(SecondNode)))
+				{
+					ShouldRun = true;
+				}
+				else
+				{
+					ShouldRun = false;
+				}
+			}
+			else if (Comparator == ComparatorType::GREATEREQUAL)
+			{
+				try
+				{
+					std::stof(RunNode(FirstNode));
+					std::stof(RunNode(SecondNode));
+				}
+				catch (const std::exception&)
+				{
+					std::cout << "Couldn't compare\n";
+					return "Error";
+				}
+				if (std::stof(RunNode(FirstNode)) >= std::stof(RunNode(SecondNode)))
+				{
+					ShouldRun = true;
+				}
+				else
+				{
+					ShouldRun = false;
+				}
+			}
+			else if (Comparator == ComparatorType::LESSER)
+			{
+				try
+				{
+					std::stof(RunNode(FirstNode));
+					std::stof(RunNode(SecondNode));
+				}
+				catch (const std::exception&)
+				{
+					std::cout << "Couldn't compare\n";
+					return "Error";
+				}
+				if (std::stof(RunNode(FirstNode)) < std::stof(RunNode(SecondNode)))
+				{
+					ShouldRun = true;
+				}
+				else
+				{
+					ShouldRun = false;
+				}
+			}
+			else if (Comparator == ComparatorType::LESSEREQUAL)
+			{
+				try
+				{
+					std::stof(RunNode(FirstNode));
+					std::stof(RunNode(SecondNode));
+				}
+				catch (const std::exception&)
+				{
+					std::cout << "Couldn't compare\n";
+					return "Error";
+				}
+				if (std::stof(RunNode(FirstNode)) <= std::stof(RunNode(SecondNode)))
+				{
+					ShouldRun = true;
+				}
+				else
+				{
+					ShouldRun = false;
+				}
+			}
+			Node* NextNode = NodeToRun->ParentNode->Params->Next();
+			if (ShouldRun)
+			{
+				NextNode->Params->GoToStart();
+				do 
+				{
+					RunNode(NextNode->Params->CurrentNode);
+				} while (NextNode->Params->Next()->Type != NodeType::INVALID);
+				if (NodeToRun->ParentNode->Params->Next()->Type == NodeType::VARIABLEUSE && NodeToRun->ParentNode->Params->CurrentNode->Name == "else")
+				{
+					NodeToRun->ParentNode->Params->Next();
+				}
+			}
+			else if (NodeToRun->ParentNode->Params->Next()->Type == NodeType::VARIABLEUSE && NodeToRun->ParentNode->Params->CurrentNode->Name == "else")
+			{
+				Node* CodeBlock = NodeToRun->ParentNode->Params->Next();
+				CodeBlock->Params->GoToStart();
+				do 
+				{
+					RunNode(CodeBlock->Params->CurrentNode);
+				} while (CodeBlock->Params->Next()->Type != NodeType::INVALID);
+			}
 		}
 		return "Cannot convert to string";
 	}

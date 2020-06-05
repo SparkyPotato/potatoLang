@@ -62,7 +62,7 @@ int main()
 
 	Node* AST = Parser::ParseProgram(&Tokens, Error);
 
-	std::system("cls");
+	//std::system("cls");
 	std::cout << "Don't worry, that was just debug stuff\nProgram Output: \n\n";
 
 	Executor CodeExecutor;

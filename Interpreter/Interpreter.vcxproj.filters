@@ -57,9 +57,4 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="code.el">
-      <Filter>Source Files</Filter>
-    </None>
-  </ItemGroup>
 </Project>

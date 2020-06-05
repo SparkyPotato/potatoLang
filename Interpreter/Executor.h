@@ -6,6 +6,16 @@
 #include "Variable.h"
 #include "Node.h"
 
+enum class ComparatorType
+{
+	GREATER,  // > - Greater Than
+	LESSER, // < Lesser Than
+	EQUAL, // = - Equal To
+	GREATEREQUAL, // >= - Greater Than or Equal To
+	LESSEREQUAL, //  <= - Lesser Than or Equal To
+	IGNORE // Used if a comparator is not being used
+};
+
 class VariableManager
 {
 public:
@@ -35,6 +45,8 @@ public:
 
 private:
 	VariableManager* VarManager;
+
+	bool ShouldRunElse;
 
 	std::string RunNode(Node* NodeToRun);
 

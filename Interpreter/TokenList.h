@@ -15,6 +15,7 @@ public:
 
 	Token* Add(TokenType Type, std::string Value);
 	Token* Next();
+	Token* GetNext();
 	Token* Prev();
 	Token* GoToStart();
 };

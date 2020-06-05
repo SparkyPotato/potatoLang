@@ -75,7 +75,7 @@ TokenList Parser::Tokenizer(std::ifstream& FileToParse, bool& ErrorFound)
 				List.Add(TokenType::BRACE, String);
 				continue;
 			}
-			if ((CurrentLine[i] == '+') || (CurrentLine[i] == '-') || (CurrentLine[i] == '*') || CurrentLine[i] == '/' || CurrentLine[i] == '=' || CurrentLine[i] == '>' || CurrentLine[i] == '<' || CurrentLine[i] == '^')
+			if (CurrentLine[i] == '=' || CurrentLine[i] == '>' || CurrentLine[i] == '<')
 			{
 				std::string String;
 				std::string Character(1, CurrentLine[i]);
@@ -103,13 +103,16 @@ Node* Parser::ParseProgram(TokenList* List, bool& ErrorFound)
 	Node* ProgramNode = new Node(nullptr, NodeType::MAIN, "Program");
 	do 
 	{
-		if (ProgramNode->Params == nullptr)
+		if (List->CurrentToken->Type != TokenType::NEWLINE)
 		{
-			ProgramNode->Params = new NodeTree(ProgramNode, Parse(List, ErrorFound, ProgramNode));
-		}
-		else
-		{
-			ProgramNode->Params->Add(Parse(List, ErrorFound, ProgramNode));
+			if (ProgramNode->Params == nullptr)
+			{
+				ProgramNode->Params = new NodeTree(ProgramNode, Parse(List, ErrorFound, ProgramNode));
+			}
+			else
+			{
+				ProgramNode->Params->Add(Parse(List, ErrorFound, ProgramNode));
+			}
 		}
 	} while (List->Next()->Type != TokenType::END);
 
@@ -121,15 +124,35 @@ Node* Parser::Parse(TokenList* List, bool& ErrorFound, Node* Parent)
 	// Code Blocks
 	if (List->CurrentToken->Type == TokenType::BRACE && List->CurrentToken->Value == "{")
 	{
-		Node* CurrentNode = new Node(Parent, NodeType::CODEBLOCK, "BlockStart");
-		std::cout << "CODEBLOCKSTART\n";
+		Node* CurrentNode = new Node(Parent, NodeType::CODEBLOCK, "Block");
+		std::cout << "CODEBLOCK\n";
 		List->Next();
+		while (List->CurrentToken->Type != TokenType::BRACE && List->CurrentToken->Value != "}")
+		{
+			if (List->CurrentToken->Type != TokenType::NEWLINE)
+			{
+				if (CurrentNode->Params == nullptr)
+				{
+					CurrentNode->Params = new NodeTree(CurrentNode, Parse(List, ErrorFound, CurrentNode));
+				}
+				else
+				{
+					CurrentNode->Params->Add(Parse(List, ErrorFound, CurrentNode));
+				}
+			}
+			else
+			{
+				List->Next();
+			}
+		}
 		return CurrentNode;
 	}
-	if (List->CurrentToken->Type == TokenType::BRACE && List->CurrentToken->Value == "}")
+	// Operators
+	if (List->CurrentToken->Type == TokenType::OPERATOR)
 	{
-		Node* CurrentNode = new Node(Parent, NodeType::CODEBLOCK, "BlockEnd");
-		std::cout << "CODEBLOCKEND\n";
+		Node* CurrentNode = new Node(Parent, NodeType::OPERATOR, List->CurrentToken->Value);
+		std::cout << List->CurrentToken->Value << "\n";
+		std::cout << "OPERATOR\n";
 		List->Next();
 		return CurrentNode;
 	}
@@ -161,15 +184,14 @@ Node* Parser::Parse(TokenList* List, bool& ErrorFound, Node* Parent)
 		return CurrentNode;
 	}
 	// Function Calls
-	if (List->CurrentToken->Type == TokenType::NAME && List->Next()->Type == TokenType::PARENTHESIS && List->CurrentToken->Value == "(")
+	if (List->CurrentToken->Type == TokenType::NAME && List->GetNext()->Type == TokenType::PARENTHESIS && List->GetNext()->Value == "(")
 	{
-		List->Prev();
 		Node* CurrentNode = new Node(Parent, NodeType::FUNCTIONCALL, List->CurrentToken->Value);
 		std::cout << List->CurrentToken->Value << "\n";
 		std::cout << "FUNCTIONCALL\n";
 		List->Next();
 		List->Next();
-		while (List->CurrentToken->Type != TokenType::PARENTHESIS && List->CurrentToken->Value != ")")
+		while (List->CurrentToken->Type != TokenType::PARENTHESIS && List->CurrentToken->Value != ")" /*&& List->CurrentToken->Type != TokenType::NEWLINE && List->CurrentToken->Value != "\n"*/)
 		{
 			if (CurrentNode->Params == nullptr)
 			{
@@ -183,7 +205,6 @@ Node* Parser::Parse(TokenList* List, bool& ErrorFound, Node* Parent)
 		List->Next();
 		return CurrentNode;
 	}
-	List->Prev();
 	// Variable Assignation
 	if (List->CurrentToken->Type == TokenType::NAME && List->CurrentToken->Value == "set")
 	{
@@ -196,18 +217,7 @@ Node* Parser::Parse(TokenList* List, bool& ErrorFound, Node* Parent)
 		{
 			List->Next();
 		}
-		while (List->CurrentToken->Type != TokenType::NEWLINE && List->CurrentToken->Type != TokenType::BRACE && List->CurrentToken->Type != TokenType::PARENTHESIS)
-		{
-			if (CurrentNode->Params == nullptr)
-			{
-				CurrentNode->Params = new NodeTree(CurrentNode, Parse(List, ErrorFound, CurrentNode));
-			}
-			else
-			{
-				CurrentNode->Params->Add(Parse(List, ErrorFound, CurrentNode));
-			}
-		}
-		List->Next();
+		CurrentNode->Params = new NodeTree(CurrentNode, Parse(List, ErrorFound, CurrentNode));
 		return CurrentNode;
 	}
 	// Function Definition
@@ -241,13 +251,6 @@ Node* Parser::Parse(TokenList* List, bool& ErrorFound, Node* Parent)
 		std::cout << "VARIABLEUSE\n";
 		List->Next();
 		return CurrentNode;
-	}
-	// Newline
-	if (List->CurrentToken->Type == TokenType::NEWLINE)
-	{
-		List->Next();
-		std::cout << "NEWLINE\n";
-		return new Node(Parent, NodeType::NEWLINE, "\n");
 	}
 
 	std::cout << "Error parsing: " << List->CurrentToken->Value << "\n";

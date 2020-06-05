@@ -28,10 +28,8 @@ public:
 	Node();
 	Node(Node* Parent, NodeType TypeOfNode, std::string NodeName);
 
-private:
 	Node* ParentNode;
 
-public:
 	NodeType Type;
 	std::string Name;
 	NodeTree* Params;
@@ -46,7 +44,7 @@ class NodeTree
 {
 public:
 	NodeTree(Node* Parent, NodeType TypeOfNode, std::string NodeName);
-	NodeTree(Node* ParentNode, Node* StartingNode);
+	NodeTree(Node* Parent, Node* StartingNode);
 
 private:
 	Node* FirstNode;

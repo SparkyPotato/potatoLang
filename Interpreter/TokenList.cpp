@@ -30,6 +30,15 @@ Token* TokenList::Next()
 	return CurrentToken;
 }
 
+Token* TokenList::GetNext()
+{
+	if (CurrentToken->NextToken == nullptr)
+	{
+		return new Token(TokenType::END, "\0");
+	}
+	return CurrentToken->NextToken;
+}
+
 Token* TokenList::Prev()
 {
 	if (CurrentToken->PrevToken == nullptr)

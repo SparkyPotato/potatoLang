@@ -20,4 +20,8 @@ Basic functionality:-
 
 2. Print to the console by using `print(<arguments>)` - where `<arguments>` can be a string, number, boolean, variable, or function return value.
 
-3. basic arithmetic is achieved by using the `add()`, `subtract()`, `multiply()`, `divide()` and `power()` functions. `add()`, and `multiply()` accept and infnite number of arguments - can be variables or numbers. `subtract()`, `divide()`, and `power()` only accept two arguments. The format followed for `power()` is `power(<base> <exponent>)`. 
+3. Get input by using `set <var-name> as input(<prompt>)` - where `<prompt>` is the prompt to show to the user. The input will be assigned to `<var-name>`
+
+4. Basic arithmetic is achieved by using the `add()`, `subtract()`, `multiply()`, `divide()` and `power()` functions. `add()`, and `multiply()` accept and infnite number of arguments - can be variables or numbers. `subtract()`, `divide()`, and `power()` only accept two arguments. The format followed for `power()` is `power(<base> <exponent>)`. 
+
+5. `if` and `else` statements are supported. Currently, `else if` and nested `if` statements are not supported. 
